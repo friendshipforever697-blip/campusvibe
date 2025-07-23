@@ -1,3 +1,4 @@
+import { NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
@@ -7,7 +8,6 @@ import {
   Alert,
   RefreshControl,
   ListRenderItem,
-  Text,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -29,157 +29,167 @@ interface FeedItem {
 
 export default function PostDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+
   const [posts, setPosts] = useState<Post[]>([]);
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
-  const [currentPostIndex, setCurrentPostIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const currentUserAvatar = 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=400';
 
-  const loadInitialData = useCallback(() => {
-    const initialPosts = Array.from({ length: 5 }, (_, index) =>
-      generateMockPost(parseInt(id || '1') + index - 2)
-    );
+  const buildFeedItems = useCallback((allPosts: Post[]) => {
+    const items: FeedItem[] = [];
 
-    console.log('✅ Generated initial posts:', initialPosts);
-
-    setPosts(initialPosts);
-    setCurrentPostIndex(2);
-    buildFeedItems(initialPosts, 2);
-  }, [id]);
-
-  const buildFeedItems = (allPosts: Post[], currentIndex: number) => {
-    const currentPost = allPosts[currentIndex];
-    console.log('🔍 Building feedItems — currentPost:', currentPost);
-
-    if (!currentPost || !currentPost.user) {
-      console.log('❌ No currentPost or user!');
-      return;
-    }
-
-    const items: FeedItem[] = [
-      { type: 'post', data: currentPost },
-    ];
-
-    currentPost.comments.forEach(comment => {
-      items.push({ type: 'comment', data: comment, postId: currentPost.id });
+    allPosts.forEach(post => {
+      items.push({ type: 'post', data: post });
+      post.comments.forEach(comment => {
+        items.push({ type: 'comment', data: comment, postId: post.id });
+      });
     });
 
-    console.log('✅ New feedItems:', items);
-
     setFeedItems(items);
-  };
+  }, []);
+
+  const loadInitialData = useCallback(() => {
+    const initialPosts = Array.from({ length: 5 }, (_, index) =>
+      generateMockPost(parseInt(id || '1') + index)
+    );
+    setPosts(initialPosts);
+    buildFeedItems(initialPosts);
+  }, [id, buildFeedItems]);
 
   const loadOlderPosts = useCallback(() => {
     if (loading) return;
-
     setLoading(true);
-
     setTimeout(() => {
       const newPosts = Array.from({ length: 3 }, (_, index) =>
         generateMockPost(posts.length + index)
       );
-
-      const updatedPosts = [...posts, ...newPosts];
-      setPosts(updatedPosts);
+      const updated = [...posts, ...newPosts];
+      setPosts(updated);
+      buildFeedItems(updated);
       setLoading(false);
-    }, 500);
-  }, [posts, loading]);
+    }, 600);
+  }, [posts, loading, buildFeedItems]);
 
   const loadNewerPosts = useCallback(() => {
     if (loading) return;
-
     setLoading(true);
-
     setTimeout(() => {
       const newPosts = Array.from({ length: 3 }, (_, index) =>
-        generateMockPost(-3 + index)
+        generateMockPost(-3 - index)
       );
-
-      const updatedPosts = [...newPosts, ...posts];
-      setPosts(updatedPosts);
-      setCurrentPostIndex(currentPostIndex + 3);
+      const updated = [...newPosts, ...posts];
+      setPosts(updated);
+      buildFeedItems(updated);
       setLoading(false);
-    }, 500);
-  }, [posts, currentPostIndex, loading]);
+    }, 600);
+  }, [posts, loading, buildFeedItems]);
 
-  const navigateToPost = (direction: 'next' | 'previous') => {
-    let newIndex = currentPostIndex;
+ const handleScroll = useCallback(
+  (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent;
+    const scrollY = contentOffset.y;
 
-    if (direction === 'next' && currentPostIndex < posts.length - 1) {
-      newIndex = currentPostIndex + 1;
-    } else if (direction === 'previous' && currentPostIndex > 0) {
-      newIndex = currentPostIndex - 1;
-    } else if (direction === 'next' && currentPostIndex >= posts.length - 2) {
-      loadOlderPosts();
-      return;
-    } else if (direction === 'previous' && currentPostIndex <= 1) {
+    if (scrollY < 50 && !loading) {
       loadNewerPosts();
-      return;
+    } else if (
+      scrollY + layoutMeasurement.height >= contentSize.height - 50 &&
+      !loading
+    ) {
+      loadOlderPosts();
     }
+  },
+  [loadOlderPosts, loadNewerPosts, loading]
+);
 
-    if (newIndex !== currentPostIndex) {
-      setCurrentPostIndex(newIndex);
-      buildFeedItems(posts, newIndex);
-    }
-  };
 
-  const handleLikePost = useCallback(() => {
-    const updatedPosts = [...posts];
-    const currentPost = updatedPosts[currentPostIndex];
-
-    if (currentPost) {
-      currentPost.isLiked = !currentPost.isLiked;
-      currentPost.likesCount += currentPost.isLiked ? 1 : -1;
-      setPosts(updatedPosts);
-      buildFeedItems(updatedPosts, currentPostIndex);
-    }
-  }, [posts, currentPostIndex]);
+  const handleLikePost = useCallback((postId: string) => {
+    const updated = posts.map(p => {
+      if (p.id === postId) {
+        const liked = !p.isLiked;
+        return {
+          ...p,
+          isLiked: liked,
+          likesCount: p.likesCount + (liked ? 1 : -1),
+        };
+      }
+      return p;
+    });
+    setPosts(updated);
+    buildFeedItems(updated);
+  }, [posts, buildFeedItems]);
 
   const handleLikeComment = useCallback((commentId: string) => {
-    const updatedPosts = [...posts];
-    const currentPost = updatedPosts[currentPostIndex];
+    const updated = posts.map(post => ({
+      ...post,
+      comments: post.comments.map(comment =>
+        comment.id === commentId
+          ? {
+              ...comment,
+              isLiked: !comment.isLiked,
+              likesCount: (comment.likesCount || 0) + (comment.isLiked ? -1 : 1),
+            }
+          : comment
+      ),
+    }));
+    setPosts(updated);
+    buildFeedItems(updated);
+  }, [posts, buildFeedItems]);
 
-    if (currentPost) {
-      const comment = currentPost.comments.find(c => c.id === commentId);
-      if (comment) {
-        comment.isLiked = !comment.isLiked;
-        comment.likesCount = (comment.likesCount || 0) + (comment.isLiked ? 1 : -1);
-        setPosts(updatedPosts);
-        buildFeedItems(updatedPosts, currentPostIndex);
-      }
+  const handleAddComment = useCallback((text: string) => {
+    const updated = [...posts];
+    const firstPost = updated[0];
+
+    const newComment: Comment = {
+  id: `comment_${Date.now()}`,
+  user: {
+    id: 'current',
+    username: 'you',
+    displayName: 'You',
+    collegeName: 'Your College Name',
+    avatar: currentUserAvatar,
+  },
+  text,
+  timestamp: new Date(),
+  likesCount: 0,
+  isLiked: false,
+};
+
+
+    firstPost.comments.push(newComment);
+    firstPost.commentsCount += 1;
+
+    setPosts(updated);
+    buildFeedItems(updated);
+  }, [posts, buildFeedItems]);
+
+  const renderItem: ListRenderItem<FeedItem> = ({ item }) => {
+    if (item.type === 'post') {
+      const post = item.data as Post;
+      return (
+        <View>
+          <PostMedia post={post} />
+          <PostInfo
+            post={post}
+            onLikePress={() => handleLikePost(post.id)}
+            onUserPress={() => Alert.alert('Profile')}
+          />
+        </View>
+      );
     }
-  }, [posts, currentPostIndex]);
-
-  const handleAddComment = useCallback((commentText: string) => {
-    const updatedPosts = [...posts];
-    const currentPost = updatedPosts[currentPostIndex];
-
-    if (currentPost) {
-      const newComment: Comment = {
-        id: `comment_${Date.now()}`,
-        user: {
-          id: 'current_user',
-          username: 'you',
-          avatar: currentUserAvatar,
-        },
-        text: commentText,
-        timestamp: new Date(),
-        likesCount: 0,
-        isLiked: false,
-      };
-
-      currentPost.comments.push(newComment);
-      currentPost.commentsCount += 1;
-      setPosts(updatedPosts);
-      buildFeedItems(updatedPosts, currentPostIndex);
-    }
-  }, [posts, currentPostIndex, currentUserAvatar]);
+    const comment = item.data as Comment;
+    return (
+      <CommentItem
+        comment={comment}
+        onUserPress={() => Alert.alert('Profile')}
+        onLikePress={() => handleLikeComment(comment.id)}
+      />
+    );
+  };
 
   const handleBackPress = () => router.back();
-  const handleOptionsPress = () => Alert.alert('Options', 'Post options menu');
-  const handleUserPress = () => Alert.alert('User Profile', 'Navigate to user profile');
+  const handleOptionsPress = () => Alert.alert('Options', 'Options menu');
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -189,58 +199,6 @@ export default function PostDetailScreen() {
     }, 1000);
   }, [loadInitialData]);
 
-  const handleScroll = useCallback((event: any) => {
-    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-    const scrollPosition = contentOffset.y;
-    const isNearTop = scrollPosition < 100;
-    const isNearBottom = scrollPosition > contentSize.height - layoutMeasurement.height - 100;
-
-    if (isNearTop && !loading) navigateToPost('previous');
-    else if (isNearBottom && !loading) navigateToPost('next');
-  }, [loading]);
-
-  const renderItem: ListRenderItem<FeedItem> = ({ item }) => {
-    if (!item?.data) {
-      return (
-        <View style={{ padding: 20 }}>
-          <Text style={{ color: 'red' }}>⚠️ Empty feed item!</Text>
-        </View>
-      );
-    }
-
-    if (item.type === 'post') {
-      const post = item.data as Post;
-
-      if (!post?.user) {
-        return (
-          <View style={{ padding: 20 }}>
-            <Text style={{ color: 'red' }}>⚠️ Missing user on post!</Text>
-          </View>
-        );
-      }
-
-      return (
-        <View>
-          <PostMedia post={post} />
-          <PostInfo
-            post={post}
-            onLikePress={handleLikePost}
-            onUserPress={handleUserPress}
-          />
-        </View>
-      );
-    } else {
-      const comment = item.data as Comment;
-      return (
-        <CommentItem
-          comment={comment}
-          onUserPress={handleUserPress}
-          onLikePress={() => handleLikeComment(comment.id)}
-        />
-      );
-    }
-  };
-
   useEffect(() => {
     loadInitialData();
   }, [loadInitialData]);
@@ -248,14 +206,11 @@ export default function PostDetailScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
-
       <PostHeader onBackPress={handleBackPress} onOptionsPress={handleOptionsPress} />
-
       <FlatList
         data={feedItems}
         renderItem={renderItem}
-        keyExtractor={(item, index) => `${item.type}_${index}`}
-        style={styles.feed}
+        keyExtractor={(item, index) => `${item.type}_${item.postId || ''}_${index}`}
         onScroll={handleScroll}
         scrollEventThrottle={16}
         refreshControl={
@@ -263,7 +218,6 @@ export default function PostDetailScreen() {
         }
         showsVerticalScrollIndicator={false}
       />
-
       <CommentInput userAvatar={currentUserAvatar} onSubmit={handleAddComment} />
     </SafeAreaView>
   );
@@ -273,8 +227,5 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-  },
-  feed: {
-    flex: 1,
   },
 });

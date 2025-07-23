@@ -1,3 +1,4 @@
+import React from "react";
 import { Tabs } from 'expo-router';
 import { Chrome as Home, Search, Plus, Video, User } from 'lucide-react-native';
 import { View, StyleSheet } from 'react-native';

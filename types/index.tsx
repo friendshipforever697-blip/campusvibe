@@ -1,9 +1,11 @@
 export interface User {
-    id: string;
-    username: string;
-    avatar: string;
-    displayName?: string;
-  }
+  id: string;
+  username: string;
+  avatar: string;
+  displayName: string;
+  collegeName: string; // ✅ NEW
+}
+
   
   export interface Comment {
     id: string;
