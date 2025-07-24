@@ -1,8 +1,17 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Image, Camera, Film, FileText, Upload, ChevronDown, Plus, Sparkles, Star, Zap } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Image, Camera, FileText, Upload, ChevronDown, Plus } from 'lucide-react-native';
+
+type FormDataKeys = 'caption' | 'branch' | 'year' | 'semester' | 'subject';
+
+interface FormData {
+  caption: string;
+  branch: string;
+  year: string;
+  semester: string;
+  subject: string;
+}
 
 const { width } = Dimensions.get('window');
 const graduationYears = ['2024', '2025', '2026', '2027', '2028', '2029', '2030'];
@@ -10,61 +19,67 @@ const semesters = ['1st Sem', '2nd Sem', '3rd Sem', '4th Sem', '5th Sem', '6th S
 
 export default function UploadPage() {
   const [activeTab, setActiveTab] = useState('Post');
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     caption: '',
-    hashtags: '',
     branch: '',
     year: '',
     semester: '',
     subject: '',
   });
+
+  const [postDescription, setPostDescription] = useState('');
+  const [tagPeople, setTagPeople] = useState('');
+  const [fileChosen, setFileChosen] = useState(false);
+  const [settings, setSettings] = useState({
+    commentsEnabled: true,
+    showLikeCount: true,
+    showShareCount: true,
+  });
+
   const [showYearPicker, setShowYearPicker] = useState(false);
   const [showSemesterPicker, setShowSemesterPicker] = useState(false);
 
   const tabs = [
-    { 
-      name: 'Post', 
-      icon: Image, 
+    {
+      name: 'Post',
+      icon: Image,
       gradient: ['#667eea', '#764ba2'],
       emoji: '📸',
       description: 'Share moments',
-      accent: '#667eea'
+      accent: '#667eea',
     },
-    { 
-      name: 'Story', 
-      icon: Camera, 
+    {
+      name: 'Story',
+      icon: Camera,
       gradient: ['#f093fb', '#f5576c'],
       emoji: '📱',
       description: '24h stories',
-      accent: '#f093fb'
+      accent: '#f093fb',
     },
-    { 
-      name: 'Reels', 
-      icon: Film, 
-      gradient: ['#4facfe', '#00f2fe'],
-      emoji: '🎬',
-      description: 'Short videos',
-      accent: '#4facfe'
-    },
-    { 
-      name: 'Notes', 
-      icon: FileText, 
+    {
+      name: 'Notes',
+      icon: FileText,
       gradient: ['#43e97b', '#38f9d7'],
       emoji: '📚',
       description: 'Study materials',
-      accent: '#43e97b'
+      accent: '#43e97b',
     },
   ];
 
-  const updateField = (field: string, value: string) => {
+  const updateField = (field: FormDataKeys, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleUpload = () => {
+    if (!fileChosen) {
+      Alert.alert('File Required', 'Please choose a file to upload.');
+      return;
+    }
+
     if (activeTab === 'Notes') {
-      const requiredFields = ['branch', 'year', 'semester', 'subject'];
+      const requiredFields: FormDataKeys[] = ['branch', 'year', 'semester', 'subject'];
       const missingFields = requiredFields.filter(field => !formData[field]);
-      
+
       if (missingFields.length > 0) {
         Alert.alert('Missing Information', 'Please fill in all required fields for notes');
         return;
@@ -77,14 +92,14 @@ export default function UploadPage() {
     }
 
     Alert.alert('Success! 🎉', `Your ${activeTab.toLowerCase()} has been uploaded successfully!`);
-    // Reset form
-    setFormData({
-      caption: '',
-      hashtags: '',
-      branch: '',
-      year: '',
-      semester: '',
-      subject: '',
+    setFormData({ caption: '', branch: '', year: '', semester: '', subject: '' });
+    setPostDescription('');
+    setTagPeople('');
+    setFileChosen(false);
+    setSettings({
+      commentsEnabled: true,
+      showLikeCount: true,
+      showShareCount: true,
     });
   };
 
@@ -95,7 +110,7 @@ export default function UploadPage() {
   const renderCompactMediaUpload = () => {
     const tabData = getActiveTabData();
     const IconComponent = tabData.icon;
-    
+
     return (
       <View style={styles.compactUploadSection}>
         <View style={styles.uploadHeader}>
@@ -104,15 +119,16 @@ export default function UploadPage() {
               <IconComponent size={20} color="#FFFFFF" strokeWidth={2} />
             </View>
             <View style={styles.uploadInfo}>
-              <Text style={styles.uploadTitle}>Choose File</Text>
+              <Text style={styles.uploadTitle}>Choose File *</Text>
               <Text style={styles.uploadSubtitle}>
-                {activeTab === 'Post' ? 'JPG, PNG up to 10MB' : 
-                 activeTab === 'Story' ? 'Photo/video, 24h limit' :
-                 activeTab === 'Reels' ? 'MP4 up to 100MB' : 'PDF up to 50MB'}
+                {activeTab === 'Story' ? 'Photo/video, 24h limit' : ''}
               </Text>
             </View>
           </View>
-          <TouchableOpacity style={styles.browseButton}>
+          <TouchableOpacity
+            style={styles.browseButton}
+            onPress={() => setFileChosen(true)}
+          >
             <Plus size={16} color={tabData.accent} strokeWidth={2.5} />
             <Text style={[styles.browseButtonText, { color: tabData.accent }]}>Browse</Text>
           </TouchableOpacity>
@@ -120,6 +136,38 @@ export default function UploadPage() {
       </View>
     );
   };
+
+  const renderPostSettings = () => (
+    <View style={styles.formCard}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.cardTitle}>⚙️ Post Settings</Text>
+      </View>
+
+      <View style={styles.inputGroup}>
+        <TouchableOpacity onPress={() => setSettings(prev => ({ ...prev, commentsEnabled: !prev.commentsEnabled }))}>
+          <Text style={styles.inputLabel}>
+            {settings.commentsEnabled ? '✅ ' : '🚫 '} Allow Comments
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.inputGroup}>
+        <TouchableOpacity onPress={() => setSettings(prev => ({ ...prev, showLikeCount: !prev.showLikeCount }))}>
+          <Text style={styles.inputLabel}>
+            {settings.showLikeCount ? '✅ ' : '🚫 '} Show Like Count
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.inputGroup}>
+        <TouchableOpacity onPress={() => setSettings(prev => ({ ...prev, showShareCount: !prev.showShareCount }))}>
+          <Text style={styles.inputLabel}>
+            {settings.showShareCount ? '✅ ' : '🚫 '} Show Share Count
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
   const renderPostUpload = () => (
     <View style={styles.uploadForm}>
@@ -129,9 +177,9 @@ export default function UploadPage() {
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle}>✨ Post Details</Text>
         </View>
-        
+
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Caption</Text>
+          <Text style={styles.inputLabel}>Caption *</Text>
           <View style={styles.textAreaContainer}>
             <TextInput
               style={styles.textArea}
@@ -147,18 +195,36 @@ export default function UploadPage() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Hashtags</Text>
+          <Text style={styles.inputLabel}>Description</Text>
+          <View style={styles.textAreaContainer}>
+            <TextInput
+              style={styles.textArea}
+              placeholder="Add more details about your post..."
+              value={postDescription}
+              onChangeText={setPostDescription}
+              multiline
+              numberOfLines={3}
+              placeholderTextColor="#9CA3AF"
+              textAlignVertical="top"
+            />
+          </View>
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Tag People</Text>
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.textInput}
-              placeholder="#CollegeLife #Fun #Memories #Friends"
-              value={formData.hashtags}
-              onChangeText={(value) => updateField('hashtags', value)}
+              placeholder="@username"
+              value={tagPeople}
+              onChangeText={setTagPeople}
               placeholderTextColor="#9CA3AF"
             />
           </View>
         </View>
       </View>
+
+      {renderPostSettings()}
     </View>
   );
 
@@ -170,7 +236,7 @@ export default function UploadPage() {
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle}>📱 Story Details</Text>
         </View>
-        
+
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Caption (Optional)</Text>
           <View style={styles.inputContainer}>
@@ -195,47 +261,6 @@ export default function UploadPage() {
     </View>
   );
 
-  const renderReelsUpload = () => (
-    <View style={styles.uploadForm}>
-      {renderCompactMediaUpload()}
-
-      <View style={styles.formCard}>
-        <View style={styles.cardHeader}>
-          <Text style={styles.cardTitle}>🎬 Reel Details</Text>
-        </View>
-        
-        <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Caption</Text>
-          <View style={styles.textAreaContainer}>
-            <TextInput
-              style={styles.textArea}
-              placeholder="Describe your amazing reel..."
-              value={formData.caption}
-              onChangeText={(value) => updateField('caption', value)}
-              multiline
-              numberOfLines={3}
-              placeholderTextColor="#9CA3AF"
-              textAlignVertical="top"
-            />
-          </View>
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Hashtags</Text>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.textInput}
-              placeholder="#Reels #CollegeLife #Trending #Viral"
-              value={formData.hashtags}
-              onChangeText={(value) => updateField('hashtags', value)}
-              placeholderTextColor="#9CA3AF"
-            />
-          </View>
-        </View>
-      </View>
-    </View>
-  );
-
   const renderNotesUpload = () => (
     <View style={styles.uploadForm}>
       {renderCompactMediaUpload()}
@@ -244,7 +269,7 @@ export default function UploadPage() {
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle}>📚 Note Details</Text>
         </View>
-        
+
         <View style={styles.formRow}>
           <View style={styles.halfInput}>
             <Text style={styles.inputLabel}>Branch</Text>
@@ -258,10 +283,10 @@ export default function UploadPage() {
               />
             </View>
           </View>
-          
+
           <View style={styles.halfInput}>
             <Text style={styles.inputLabel}>Year</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.dropdownContainer}
               onPress={() => setShowYearPicker(!showYearPicker)}
             >
@@ -272,7 +297,7 @@ export default function UploadPage() {
                 <ChevronDown size={14} color="#6B7280" />
               </View>
             </TouchableOpacity>
-            
+
             {showYearPicker && (
               <View style={styles.dropdown}>
                 {graduationYears.map((year) => (
@@ -295,7 +320,7 @@ export default function UploadPage() {
         <View style={styles.formRow}>
           <View style={styles.halfInput}>
             <Text style={styles.inputLabel}>Semester</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.dropdownContainer}
               onPress={() => setShowSemesterPicker(!showSemesterPicker)}
             >
@@ -306,7 +331,7 @@ export default function UploadPage() {
                 <ChevronDown size={14} color="#6B7280" />
               </View>
             </TouchableOpacity>
-            
+
             {showSemesterPicker && (
               <View style={styles.dropdown}>
                 {semesters.map((semester) => (
@@ -324,7 +349,7 @@ export default function UploadPage() {
               </View>
             )}
           </View>
-          
+
           <View style={styles.halfInput}>
             <Text style={styles.inputLabel}>Subject</Text>
             <View style={styles.inputContainer}>
@@ -344,23 +369,17 @@ export default function UploadPage() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Create</Text>
         <Text style={styles.headerSubtitle}>Share your college moments</Text>
       </View>
 
-      {/* Tab Selector */}
       <View style={styles.tabContainer}>
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
-          contentContainerStyle={styles.tabScrollContent}
-        >
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabScrollContent}>
           {tabs.map((tab) => {
             const IconComponent = tab.icon;
             const isActive = activeTab === tab.name;
-            
+
             return (
               <TouchableOpacity
                 key={tab.name}
@@ -370,9 +389,7 @@ export default function UploadPage() {
               >
                 <View style={[styles.tabContent, isActive && { backgroundColor: tab.accent }]}>
                   <IconComponent size={16} color={isActive ? "#FFFFFF" : "#6B7280"} strokeWidth={2} />
-                  <Text style={[styles.tabText, isActive && styles.activeTabText]}>
-                    {tab.name}
-                  </Text>
+                  <Text style={[styles.tabText, isActive && styles.activeTabText]}>{tab.name}</Text>
                 </View>
               </TouchableOpacity>
             );
@@ -380,14 +397,11 @@ export default function UploadPage() {
         </ScrollView>
       </View>
 
-      {/* Content */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {activeTab === 'Post' && renderPostUpload()}
         {activeTab === 'Story' && renderStoryUpload()}
-        {activeTab === 'Reels' && renderReelsUpload()}
         {activeTab === 'Notes' && renderNotesUpload()}
 
-        {/* Upload Button */}
         <View style={styles.uploadButtonSection}>
           <TouchableOpacity style={styles.uploadButton} onPress={handleUpload} activeOpacity={0.9}>
             <View style={[styles.uploadButtonContent, { backgroundColor: getActiveTabData().accent }]}>
@@ -400,6 +414,9 @@ export default function UploadPage() {
     </SafeAreaView>
   );
 }
+
+
+
 
 const styles = StyleSheet.create({
   container: {
