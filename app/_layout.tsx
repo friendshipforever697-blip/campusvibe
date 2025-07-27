@@ -44,6 +44,7 @@ export default function RootLayout() {
         <Stack.Screen name="events" options={{ headerShown: false }} />
         <Stack.Screen name="notes" options={{ headerShown: false }} />
         <Stack.Screen name="messages" options={{ headerShown: false }} />
+        <Stack.Screen name="story" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="dark" />

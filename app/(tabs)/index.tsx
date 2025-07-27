@@ -10,7 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 const { width } = Dimensions.get('window');
 
 const stories = [
-  { id: 1, name: 'Your Story', image: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150', isOwn: true },
+  { id: 1, name: 'Your Vibe', image: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150', isOwn: true },
   { id: 2, name: 'Rahul', image: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150' },
   { id: 3, name: 'Priya', image: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150' },
   { id: 4, name: 'Arjun', image: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150' },
@@ -139,7 +139,12 @@ export default function HomePage() {
         <View style={styles.storiesSection}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.storiesContainer}>
             {stories.map((story) => (
-              <TouchableOpacity key={story.id} style={styles.storyItem} activeOpacity={0.8}>
+              <TouchableOpacity 
+                key={story.id} 
+                style={styles.storyItem} 
+                activeOpacity={0.8}
+                onPress={() => story.isOwn ? router.push('/story/create') : console.log('View story:', story.id)}
+              >
                 <View style={styles.storyImageContainer}>
                   {story.isOwn ? (
                     <View style={styles.ownStoryContainer}>
@@ -167,7 +172,7 @@ export default function HomePage() {
                   )}
                 </View>
                 <Text style={styles.storyName} numberOfLines={1}>
-                  {story.isOwn ? 'Your Story' : story.name}
+                  {story.isOwn ? 'Your Vibe' : story.name}
                 </Text>
               </TouchableOpacity>
             ))}
