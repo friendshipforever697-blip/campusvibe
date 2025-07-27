@@ -35,7 +35,9 @@ export default function LoginPage() {
 
       // ✅ DEBUG LOGS
       console.log('SIGNIN DATA:', data);
-      console.log('SIGNIN ERROR:', error);
+      if (error) {
+        console.log('SIGNIN ERROR:', error);
+      }
 
       if (error) {
         Alert.alert('Login Failed', error.message);
