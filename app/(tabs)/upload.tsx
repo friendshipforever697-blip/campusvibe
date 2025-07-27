@@ -308,7 +308,51 @@ export default function UploadPage() {
     </View>
   );
 
-  const renderStoryUpload = () => <View />; // unchanged
+  const renderStoryUpload = () => (
+  <View style={styles.uploadForm}>
+    {/* Step 1: Media Picker */}
+    <View style={styles.formCard}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.cardTitle}>✨ Create Vibe</Text>
+      </View>
+
+      <View style={styles.inputGroupRow}>
+        <TouchableOpacity
+          style={styles.browseButton}
+          onPress={() => Alert.alert('Camera Open', 'Launch camera here')}
+        >
+          <Camera size={16} color="#f093fb" strokeWidth={2.5} />
+          <Text style={[styles.browseButtonText, { color: '#f093fb' }]}>
+            Open Camera
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.browseButton}
+          onPress={() => Alert.alert('Gallery Open', 'Launch gallery picker here')}
+        >
+          <Image size={16} color="#f093fb" strokeWidth={2.5} />
+          <Text style={[styles.browseButtonText, { color: '#f093fb' }]}>
+            Choose from Gallery
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+
+    {/* Step 2: Preview & Edit Area */}
+    <View style={styles.formCard}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.cardTitle}>🖌️ Preview & Edit</Text>
+      </View>
+
+      <View style={styles.inputGroupRow}>
+        <Text>Add Text, Stickers, Location, Music, Tags...</Text>
+        <Text>(Coming soon... Hook your editor here)</Text>
+      </View>
+    </View>
+  </View>
+);
+
   const renderNotesUpload = () => <View />; // unchanged
 
   return (
