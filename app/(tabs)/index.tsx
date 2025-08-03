@@ -99,7 +99,7 @@ export default function HomePage() {
       router.push('../vibes/Camera');
     } else {
       router.push({
-        pathname: '/stories/viewer',
+        pathname: '../vibes/viewer',
         params: { storyId: vibe.id, username: vibe.username },
       });
     }
