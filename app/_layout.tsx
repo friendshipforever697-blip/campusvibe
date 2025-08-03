@@ -1,5 +1,4 @@
 import React from "react";
-
 import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -38,15 +37,15 @@ export default function RootLayout() {
   return (
     <>
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="auth" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="events" options={{ headerShown: false }} />
-        <Stack.Screen name="notes" options={{ headerShown: false }} />
-        <Stack.Screen name="messages" options={{ headerShown: false }} />
-        <Stack.Screen name="story" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
+  <Stack.Screen name="index" />
+  <Stack.Screen name="auth" />
+  <Stack.Screen name="events" />
+  <Stack.Screen name="notes" />
+<Stack.Screen name="stories" options={{ headerShown: false }} />
+  <Stack.Screen name="+not-found" />
+</Stack>
+
+
       <StatusBar style="dark" />
     </>
   );

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useRouter } from 'expo-router';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Dimensions, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Bell, MessageCircle, Heart, MessageSquare, Share, Bookmark, MoveHorizontal as MoreHorizontal, Play, Plus } from 'lucide-react-native';
@@ -9,14 +10,41 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 
-const stories = [
-  { id: 1, name: 'Your Vibe', image: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150', isOwn: true },
-  { id: 2, name: 'Rahul', image: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150' },
-  { id: 3, name: 'Priya', image: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150' },
-  { id: 4, name: 'Arjun', image: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150' },
-  { id: 5, name: 'Sneha', image: 'https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=150' },
-  { id: 6, name: 'Dev', image: 'https://images.pexels.com/photos/1181467/pexels-photo-1181467.jpeg?auto=compress&cs=tinysrgb&w=150' },
-  { id: 7, name: 'Maya', image: 'https://images.pexels.com/photos/1181671/pexels-photo-1181671.jpeg?auto=compress&cs=tinysrgb&w=150' },
+const vibes = [
+  {
+    id: 'your-vibe',
+    username: 'Your Vibes',
+    avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+    isYourVibe: true,
+  },
+  {
+    id: '1',
+    username: 'Rahul',
+    avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+    hasVibe: true,
+    viewed: false,
+  },
+  {
+    id: '2',
+    username: 'Priya',
+    avatar: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+    hasVibe: true,
+    viewed: true,
+  },
+  {
+    id: '3',
+    username: 'Arjun',
+    avatar: 'https://images.pexels.com/photos/1674752/pexels-photo-1674752.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+    hasVibe: true,
+    viewed: false,
+  },
+  {
+    id: '4',
+    username: 'Sneh',
+    avatar: 'https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+    hasVibe: true,
+    viewed: true,
+  },
 ];
 
 const posts = [
@@ -34,37 +62,7 @@ const posts = [
     isLiked: false,
     isSaved: false,
     isVideo: false,
-  },
-  {
-    id: 2,
-    username: 'priya_tech',
-    userImage: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150',
-    image: 'https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg?auto=compress&cs=tinysrgb&w=400',
-    caption: 'Debugging at 3 AM hits different 💻 #CSELife #Programming',
-    likes: 892,
-    comments: 67,
-    shares: 23,
-    college: 'NIT Trichy',
-    timeAgo: '4h',
-    isLiked: true,
-    isSaved: false,
-    isVideo: true,
-  },
-  {
-    id: 3,
-    username: 'arjun_engineering',
-    userImage: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150',
-    image: 'https://images.pexels.com/photos/1181467/pexels-photo-1181467.jpeg?auto=compress&cs=tinysrgb&w=400',
-    caption: 'When you finally understand that one concept 🤯 #Engineering #Study #Breakthrough',
-    likes: 2103,
-    comments: 156,
-    shares: 78,
-    college: 'BITS Pilani',
-    timeAgo: '6h',
-    isLiked: false,
-    isSaved: true,
-    isVideo: false,
-  },
+  }
 ];
 
 export default function HomePage() {
@@ -77,28 +75,38 @@ export default function HomePage() {
   };
 
   const toggleLike = (postId: number) => {
-    setPostsState(prev => prev.map(post => 
-      post.id === postId 
-        ? { 
-            ...post, 
-            isLiked: !post.isLiked,
-            likes: post.isLiked ? post.likes - 1 : post.likes + 1
-          }
+    setPostsState(prev => prev.map(post =>
+      post.id === postId
+        ? {
+          ...post,
+          isLiked: !post.isLiked,
+          likes: post.isLiked ? post.likes - 1 : post.likes + 1
+        }
         : post
     ));
   };
 
   const toggleSave = (postId: number) => {
-    setPostsState(prev => prev.map(post => 
-      post.id === postId 
+    setPostsState(prev => prev.map(post =>
+      post.id === postId
         ? { ...post, isSaved: !post.isSaved }
         : post
     ));
   };
 
+  const handleVibePress = (vibe: any) => {
+    if (vibe.isYourVibe) {
+      router.push('../vibes/Camera');
+    } else {
+      router.push({
+        pathname: '/stories/viewer',
+        params: { storyId: vibe.id, username: vibe.username },
+      });
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* Sleek Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.logoContainer}>
@@ -128,66 +136,49 @@ export default function HomePage() {
         </View>
       </View>
 
-      <ScrollView 
+      <ScrollView
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         style={styles.scrollView}
       >
-        {/* Compact Stories Section */}
-        <View style={styles.storiesSection}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.storiesContainer}>
-            {stories.map((story) => (
-              <TouchableOpacity 
-                key={story.id} 
-                style={styles.storyItem} 
-                activeOpacity={0.8}
-                onPress={() => story.isOwn ? router.push('/story/create') : console.log('View story:', story.id)}
-              >
-                <View style={styles.storyImageContainer}>
-                  {story.isOwn ? (
-                    <View style={styles.ownStoryContainer}>
-                      <Image source={{ uri: story.image }} style={styles.storyImage} />
-                      <LinearGradient
-                        colors={['#667eea', '#764ba2']}
-                        style={styles.addStoryIcon}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                      >
-                        <Plus size={12} color="#FFFFFF" strokeWidth={3} />
-                      </LinearGradient>
-                    </View>
-                  ) : (
-                    <LinearGradient
-                      colors={['#667eea', '#764ba2', '#f093fb']}
-                      style={styles.storyGradient}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                    >
-                      <View style={styles.storyImageWrapper}>
-                        <Image source={{ uri: story.image }} style={styles.storyImage} />
-                      </View>
-                    </LinearGradient>
-                  )}
-                </View>
-                <Text style={styles.storyName} numberOfLines={1}>
-                  {story.isOwn ? 'Your Vibe' : story.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ paddingVertical: 10, paddingLeft: 16 }}
+          contentContainerStyle={{ gap: 12 }}
+        >
+          {vibes.map((vibe) => (
+            <TouchableOpacity
+              key={vibe.id}
+              style={{ alignItems: 'center', width: 80 }}
+              onPress={() => handleVibePress(vibe)}
+            >
+              <View style={[{ width: 70, height: 70, borderRadius: 35, marginBottom: 6, position: 'relative' },
+              vibe.isYourVibe && { borderWidth: 2, borderColor: '#E5E7EB' },
+              vibe.hasVibe && !vibe.viewed && { borderWidth: 3, borderColor: '#6366F1' },
+              vibe.hasVibe && vibe.viewed && { borderWidth: 3, borderColor: '#9CA3AF' }
+              ]}>
+                <Image source={{ uri: vibe.avatar }} style={{ width: '100%', height: '100%', borderRadius: 35 }} />
+                {vibe.isYourVibe && (
+                  <View style={{ position: 'absolute', bottom: -2, right: -2, width: 24, height: 24, borderRadius: 12, backgroundColor: '#6366F1', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: 'white' }}>
+                    <Plus size={16} color="white" />
+                  </View>
+                )}
+              </View>
+              <Text style={{ fontSize: 12, color: '#000', textAlign: 'center', fontWeight: '500' }}>{vibe.username}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
 
-        {/* Enhanced Posts Feed */}
+        {/* Posts Feed */}
         <View style={styles.postsContainer}>
           {postsState.map((post) => (
             <View key={post.id} style={styles.postCard}>
               {/* Post Header */}
               <View style={styles.postHeader}>
                 <View style={styles.postUserInfo}>
-                  <Avatar 
-                    source={{ uri: post.userImage }} 
+                  <Avatar
+                    source={{ uri: post.userImage }}
                     size={36}
                     showOnlineStatus={true}
                     isOnline={Math.random() > 0.5}
@@ -219,8 +210,7 @@ export default function HomePage() {
                     </LinearGradient>
                   </View>
                 )}
-                
-                {/* Engagement Overlay */}
+
                 <LinearGradient
                   colors={['transparent', 'rgba(0,0,0,0.1)']}
                   style={styles.imageOverlay}
@@ -230,13 +220,13 @@ export default function HomePage() {
               {/* Post Actions */}
               <View style={styles.postActions}>
                 <View style={styles.leftActions}>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.actionButton}
                     onPress={() => toggleLike(post.id)}
                     activeOpacity={0.7}
                   >
-                    <Heart 
-                      size={28} 
+                    <Heart
+                      size={28}
                       color={post.isLiked ? "#EF4444" : "#1F2937"}
                       fill={post.isLiked ? "#EF4444" : "none"}
                       strokeWidth={2}
@@ -250,8 +240,8 @@ export default function HomePage() {
                   </TouchableOpacity>
                 </View>
                 <TouchableOpacity onPress={() => toggleSave(post.id)} activeOpacity={0.7}>
-                  <Bookmark 
-                    size={28} 
+                  <Bookmark
+                    size={28}
                     color={post.isSaved ? "#F59E0B" : "#1F2937"}
                     fill={post.isSaved ? "#F59E0B" : "none"}
                     strokeWidth={2}
