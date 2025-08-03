@@ -6,6 +6,7 @@ import { Bell, MessageCircle, Heart, MessageSquare, Share, Bookmark, MoveHorizon
 import { router } from 'expo-router';
 import { Card } from '@/components/ui/Card';
 import { Avatar } from '@/components/ui/Avatar';
+import { StoryRing } from '@/components/ui/StoryRing';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
@@ -13,7 +14,7 @@ const { width } = Dimensions.get('window');
 const vibes = [
   {
     id: 'your-vibe',
-    username: 'Your Vibes',
+    username: 'Your Vibe',
     avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
     isYourVibe: true,
   },
@@ -96,10 +97,10 @@ export default function HomePage() {
 
   const handleVibePress = (vibe: any) => {
     if (vibe.isYourVibe) {
-      router.push('../vibes/Camera');
+      router.push('/vibes/camera');
     } else {
       router.push({
-        pathname: '../vibes/viewer',
+        pathname: '/vibes/viewer',
         params: { storyId: vibe.id, username: vibe.username },
       });
     }
@@ -148,25 +149,16 @@ export default function HomePage() {
           contentContainerStyle={{ gap: 12 }}
         >
           {vibes.map((vibe) => (
-            <TouchableOpacity
+            <StoryRing
               key={vibe.id}
-              style={{ alignItems: 'center', width: 80 }}
+              avatar={vibe.avatar}
+              username={vibe.username}
+              hasStory={vibe.hasVibe}
+              viewed={vibe.viewed}
+              isYourStory={vibe.isYourVibe}
               onPress={() => handleVibePress(vibe)}
-            >
-              <View style={[{ width: 70, height: 70, borderRadius: 35, marginBottom: 6, position: 'relative' },
-              vibe.isYourVibe && { borderWidth: 2, borderColor: '#E5E7EB' },
-              vibe.hasVibe && !vibe.viewed && { borderWidth: 3, borderColor: '#6366F1' },
-              vibe.hasVibe && vibe.viewed && { borderWidth: 3, borderColor: '#9CA3AF' }
-              ]}>
-                <Image source={{ uri: vibe.avatar }} style={{ width: '100%', height: '100%', borderRadius: 35 }} />
-                {vibe.isYourVibe && (
-                  <View style={{ position: 'absolute', bottom: -2, right: -2, width: 24, height: 24, borderRadius: 12, backgroundColor: '#6366F1', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: 'white' }}>
-                    <Plus size={16} color="white" />
-                  </View>
-                )}
-              </View>
-              <Text style={{ fontSize: 12, color: '#000', textAlign: 'center', fontWeight: '500' }}>{vibe.username}</Text>
-            </TouchableOpacity>
+              size={70}
+            />
           ))}
         </ScrollView>
 
