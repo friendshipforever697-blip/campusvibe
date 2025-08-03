@@ -9,32 +9,38 @@ export const mockUsers: User[] = [
     username: 'alex_campus',
     avatar: 'https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=400',
     displayName: 'Alex Johnson',
+    collegeName: 'CMR College',
   },
   {
     id: '2',
     username: 'sarah_student',
     avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=400',
     displayName: 'Sarah Chen',
+    collegeName: 'BITS Pilani',
   },
   {
     id: '3',
     username: 'mike_studies',
     avatar: 'https://images.pexels.com/photos/1212984/pexels-photo-1212984.jpeg?auto=compress&cs=tinysrgb&w=400',
     displayName: 'Mike Rodriguez',
+    collegeName: 'IIT Delhi',
   },
   {
     id: '4',
     username: 'emma_college',
     avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=400',
     displayName: 'Emma Davis',
+    collegeName: 'JNTU Hyderabad',
   },
   {
     id: '5',
     username: 'david_uni',
     avatar: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400',
     displayName: 'David Kim',
+    collegeName: 'Osmania University',
   },
 ];
+
 
 // ------------------------------
 // ✅ Sample images & captions
